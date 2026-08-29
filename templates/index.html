@@ -598,8 +598,11 @@
       grid.innerHTML = villas.map(villa => {
         const airbnb = villa.airbnb;
         const isMatched = airbnb && airbnb.is_matched && airbnb.primary_url;
-        const searchUrl = (airbnb && airbnb.airbnb_search_url) || `https://www.airbnb.com/s/Miami--FL/homes?query=${encodeURIComponent(villa.display_name)}`;
-        
+        const searchUrl = `https://www.airbnb.com/s/Miami--FL/homes?query=${encodeURIComponent(villa.display_name)}`;
+        const origin = window.location.origin;
+        const heroUrl = villa.hero_image ? (villa.hero_image.startsWith('http') ? villa.hero_image : `${origin}${villa.hero_image}`) : '';
+        const lensUrl = `https://lens.google.com/uploadbyurl?url=${encodeURIComponent(heroUrl)}`;
+
         let airbnbBadge = '';
         if (isMatched) {
           airbnbBadge = `
@@ -613,31 +616,6 @@
               <i data-lucide="home" class="w-3.5 h-3.5"></i>
               <span>Airbnb Listing ↗</span>
             </a>
-          `;
-        } else if (airbnb) {
-          airbnbBadge = `
-            <a 
-              href="${escapeHtml(searchUrl)}"
-              target="_blank"
-              onclick="event.stopPropagation()"
-              title="Search this mansion on Airbnb"
-              class="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-[#FF5A5F]/20 hover:bg-[#FF5A5F] border border-[#FF5A5F]/40 text-[#FF5A5F] hover:text-white text-[11px] font-semibold transition-all"
-            >
-              <i data-lucide="external-link" class="w-3 h-3"></i>
-              <span>Airbnb Search ↗</span>
-            </a>
-          `;
-        } else {
-          airbnbBadge = `
-            <button 
-              id="btn-airbnb-${escapeHtml(villa.folder_name)}"
-              onclick="event.stopPropagation(); searchAirbnb('${escapeHtml(villa.folder_name)}')"
-              title="Scan Airbnb for matching listing"
-              class="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-slate-900/90 hover:bg-slate-800 border border-slate-700 text-slate-300 hover:text-white text-[11px] font-medium transition-colors"
-            >
-              <i data-lucide="compass" class="w-3 h-3 text-[#FF5A5F]"></i>
-              <span>Find on Airbnb</span>
-            </button>
           `;
         }
 
@@ -656,7 +634,7 @@
                 <span>${villa.count} Photos</span>
               </div>
 
-              <!-- Top Right: Airbnb Status Pill -->
+              <!-- Top Right: Verified Airbnb Badge if matched -->
               <div class="absolute top-3 right-3">
                 ${airbnbBadge}
               </div>
@@ -664,42 +642,56 @@
 
             <div class="p-5 flex-1 flex flex-col justify-between">
               <div>
-                <h3 class="text-lg font-serif font-bold text-slate-100 group-hover:text-gold-400 transition-colors">
-                  ${escapeHtml(villa.display_name)}
-                </h3>
+                <div class="flex items-center justify-between">
+                  <h3 class="text-lg font-serif font-bold text-slate-100 group-hover:text-gold-400 transition-colors">
+                    ${escapeHtml(villa.display_name)}
+                  </h3>
+                </div>
                 <p class="text-xs text-slate-400 mt-1 font-mono">
                   ./downloads/${escapeHtml(villa.folder_name)}/
                 </p>
               </div>
 
-              <div class="pt-4 mt-4 border-t border-slate-800/80 flex items-center justify-between gap-2">
-                <button 
-                  onclick="openGallery('${escapeHtml(villa.folder_name)}', 0)"
-                  class="flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-xl bg-slate-800/90 hover:bg-gold-500 hover:text-slate-950 text-slate-200 text-xs font-semibold transition-all duration-200"
-                >
-                  <i data-lucide="images" class="w-4 h-4"></i>
-                  <span>View Photos</span>
-                </button>
-                
-                ${isMatched ? `
+              <!-- Action Bar -->
+              <div class="pt-4 mt-4 border-t border-slate-800/80 space-y-2">
+                <div class="flex items-center gap-2">
+                  <button 
+                    onclick="openGallery('${escapeHtml(villa.folder_name)}', 0)"
+                    class="flex-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl bg-slate-800 hover:bg-gold-500 hover:text-slate-950 text-slate-200 text-xs font-semibold transition-all duration-200"
+                  >
+                    <i data-lucide="images" class="w-4 h-4"></i>
+                    <span>Photos (${villa.count})</span>
+                  </button>
+                  
                   <a 
-                    href="${escapeHtml(airbnb.primary_url)}"
+                    href="${escapeHtml(lensUrl)}"
                     target="_blank"
-                    title="Open on Airbnb"
+                    title="Reverse Image Search via Google Lens (Find across Airbnb/Web)"
+                    class="p-2 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-300 hover:text-white transition-colors"
+                  >
+                    <i data-lucide="scan" class="w-4 h-4 text-gold-400"></i>
+                  </a>
+
+                  <a 
+                    href="${escapeHtml(searchUrl)}"
+                    target="_blank"
+                    title="Search '${escapeHtml(villa.display_name)}' on Airbnb"
                     class="p-2 rounded-xl bg-[#FF5A5F]/15 hover:bg-[#FF5A5F] border border-[#FF5A5F]/30 text-[#FF5A5F] hover:text-white transition-colors"
                   >
-                    <i data-lucide="external-link" class="w-4 h-4"></i>
+                    <i data-lucide="home" class="w-4 h-4"></i>
                   </a>
-                ` : `
-                  <a 
-                    href="https://www.airbnb.com/s/Miami--FL/homes?query=${encodeURIComponent(villa.display_name)}"
-                    target="_blank"
-                    title="Search on Airbnb"
-                    class="p-2 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-400 hover:text-white transition-colors"
+                </div>
+
+                <!-- Custom Link input/badge -->
+                <div class="flex items-center gap-1.5">
+                  <button 
+                    onclick="promptSaveAirbnbUrl('${escapeHtml(villa.folder_name)}')"
+                    class="w-full text-[11px] py-1 px-2 rounded-lg bg-slate-900/60 hover:bg-slate-900 border border-slate-800 text-slate-400 hover:text-slate-200 flex items-center justify-center gap-1 transition-colors"
                   >
-                    <i data-lucide="search" class="w-4 h-4"></i>
-                  </a>
-                `}
+                    <i data-lucide="link" class="w-3 h-3"></i>
+                    <span>${isMatched ? 'Edit Verified Airbnb Link' : '+ Link Airbnb URL'}</span>
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -708,6 +700,29 @@
 
       lucide.createIcons();
     }
+
+    async function promptSaveAirbnbUrl(folderName) {
+      const current = state.villas.find(v => v.folder_name === folderName);
+      const prevUrl = (current && current.airbnb && current.airbnb.primary_url) || '';
+      const url = prompt(`Enter verified Airbnb URL for ${folderName.replace('_', ' ')}:\n(e.g., https://www.airbnb.com/rooms/12345678)`, prevUrl);
+      
+      if (url !== null) {
+        try {
+          const res = await fetch(`/api/villas/${folderName}/airbnb/save`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ airbnb_url: url.trim() })
+          });
+          const data = await res.json();
+          if (current) current.airbnb = data.airbnb;
+          renderVillasGrid(state.villas);
+        } catch (e) {
+          alert('Failed to save Airbnb URL: ' + e);
+        }
+      }
+    }
+
+
 
     function filterVillas() {
       const q = document.getElementById('search-input').value.toLowerCase().trim();

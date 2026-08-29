@@ -120,16 +120,31 @@ async def get_villas():
 
 from airbnb_finder import match_villa_to_airbnb
 
-@app.post("/api/villas/{folder_name}/airbnb/search")
-async def search_single_villa_airbnb(folder_name: str, force: bool = False):
-    """Searches for corresponding Airbnb listing for a single villa."""
-    global_scraper_state.add_log(f"Scanning Airbnb for {folder_name}...")
-    result = await match_villa_to_airbnb(folder_name=folder_name, download_dir=DOWNLOAD_DIR, force_refresh=force)
-    if result.get("is_matched"):
-        global_scraper_state.add_log(f"[Airbnb Match Found] {folder_name} -> {result.get('primary_url')}")
-    else:
-        global_scraper_state.add_log(f"[Airbnb Search Ready] {folder_name} -> Query prepared ({result.get('airbnb_search_url')})")
-    return result
+class SaveAirbnbRequest(BaseModel):
+    airbnb_url: str
+
+@app.post("/api/villas/{folder_name}/airbnb/save")
+async def save_villa_airbnb_link(folder_name: str, payload: SaveAirbnbRequest):
+    """Saves a verified Airbnb listing URL for a villa."""
+    vdir = DOWNLOAD_DIR / folder_name
+    if not vdir.exists():
+        raise HTTPException(status_code=404, detail="Villa not found")
+    
+    url = payload.airbnb_url.strip()
+    data = {
+        "folder_name": folder_name,
+        "display_name": folder_name.replace("_", " "),
+        "is_matched": bool(url),
+        "primary_url": url if url else None,
+        "all_matched_urls": [url] if url else [],
+        "airbnb_search_url": f"https://www.airbnb.com/s/Miami--FL/homes?query={folder_name.replace('_', ' ')}",
+        "total_matches": 1 if url else 0,
+        "manual_verified": True
+    }
+    
+    save_airbnb_match(vdir, data)
+    global_scraper_state.add_log(f"Verified Airbnb listing saved for {folder_name}: {url}")
+    return {"status": "saved", "airbnb": data}
 
 
 @app.post("/api/airbnb/search-all")
