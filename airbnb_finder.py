@@ -1,6 +1,6 @@
 """
-Airbnb Cross-Listing Matcher
-Locates corresponding Airbnb / Airbnb Luxe listings for scraped luxury villas.
+Airbnb Cross-Listing & Visual Matcher Module
+Locates corresponding Airbnb listings and builds visual reverse-search links for scraped mansions.
 """
 
 import json
@@ -51,19 +51,18 @@ async def find_airbnb_matches_by_query(villa_name: str) -> List[str]:
     Searches for exact Airbnb room links matching the property name and Miami location.
     """
     clean_name = villa_name.replace("Villa_", "").replace("Villa", "").strip()
-    query = f'site:airbnb.com "Miami" "Villa {clean_name}"'
+    query = f'site:airbnb.com/rooms "Miami" "{clean_name}"'
     search_url = f"https://html.duckduckgo.com/html/?q={urllib.parse.quote(query)}"
 
     found_links: List[str] = []
 
     try:
-        async with httpx.AsyncClient(headers=HEADERS, follow_redirects=True, timeout=15.0) as client:
+        async with httpx.AsyncClient(headers=HEADERS, follow_redirects=True, timeout=12.0) as client:
             resp = await client.get(search_url)
             if resp.status_code == 200:
                 soup = BeautifulSoup(resp.text, "html.parser")
                 for a in soup.find_all("a", href=True):
                     href = a["href"]
-                    # Extract redirect target if present
                     match = re.search(r"uddg=([^&]+)", href)
                     target = urllib.parse.unquote(match.group(1)) if match else href
                     
@@ -73,15 +72,9 @@ async def find_airbnb_matches_by_query(villa_name: str) -> List[str]:
                             if clean_link not in found_links:
                                 found_links.append(clean_link)
     except Exception as e:
-        logger.error(f"Error querying search index for {villa_name}: {e}")
+        logger.debug(f"Search index query notice for {villa_name}: {e}")
 
     return found_links
-
-
-def build_lens_search_url(image_url: str) -> str:
-    """Creates a Google Lens reverse-image search link for a given image URL."""
-    encoded = urllib.parse.quote(image_url)
-    return f"https://lens.google.com/uploadbyurl?url={encoded}"
 
 
 def build_airbnb_search_url(villa_name: str) -> str:
@@ -89,6 +82,18 @@ def build_airbnb_search_url(villa_name: str) -> str:
     clean_name = villa_name.replace("Villa_", "").replace("Villa", "").strip()
     query_str = urllib.parse.quote(f"Villa {clean_name}")
     return f"https://www.airbnb.com/s/Miami--FL/homes?query={query_str}"
+
+
+def build_google_airbnb_search_url(villa_name: str) -> str:
+    """Creates a scoped Google search URL strictly for airbnb.com listings."""
+    clean_name = villa_name.replace("Villa_", "").replace("Villa", "").strip()
+    query = f'site:airbnb.com/rooms "Miami" "{clean_name}"'
+    return f"https://www.google.com/search?q={urllib.parse.quote(query)}"
+
+
+def build_lens_search_url(image_url: str) -> str:
+    """Creates a Google Lens reverse-image search link."""
+    return f"https://lens.google.com/uploadbyurl?url={urllib.parse.quote(image_url)}"
 
 
 async def match_villa_to_airbnb(
@@ -111,12 +116,13 @@ async def match_villa_to_airbnb(
 
     display_name = folder_name.replace("_", " ")
     
-    # 1. Search for direct Airbnb room links
+    # 1. Attempt automated search index lookup
     direct_links = await find_airbnb_matches_by_query(display_name)
     primary_airbnb_url = direct_links[0] if direct_links else None
 
-    # 2. Build fallback search and visual match links
+    # 2. Build direct search and reverse visual URLs
     airbnb_search_url = build_airbnb_search_url(display_name)
+    google_airbnb_url = build_google_airbnb_search_url(display_name)
 
     result_data = {
         "folder_name": folder_name,
@@ -125,10 +131,12 @@ async def match_villa_to_airbnb(
         "primary_url": primary_airbnb_url,
         "all_matched_urls": direct_links,
         "airbnb_search_url": airbnb_search_url,
+        "google_airbnb_url": google_airbnb_url,
         "total_matches": len(direct_links),
+        "status": "completed"
     }
 
-    # Save to cache
+    # Cache locally
     save_airbnb_match(vdir, result_data)
 
     return result_data

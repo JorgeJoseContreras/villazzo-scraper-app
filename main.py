@@ -123,7 +123,12 @@ from airbnb_finder import match_villa_to_airbnb
 @app.post("/api/villas/{folder_name}/airbnb/search")
 async def search_single_villa_airbnb(folder_name: str, force: bool = False):
     """Searches for corresponding Airbnb listing for a single villa."""
+    global_scraper_state.add_log(f"Scanning Airbnb for {folder_name}...")
     result = await match_villa_to_airbnb(folder_name=folder_name, download_dir=DOWNLOAD_DIR, force_refresh=force)
+    if result.get("is_matched"):
+        global_scraper_state.add_log(f"[Airbnb Match Found] {folder_name} -> {result.get('primary_url')}")
+    else:
+        global_scraper_state.add_log(f"[Airbnb Search Ready] {folder_name} -> Query prepared ({result.get('airbnb_search_url')})")
     return result
 
 
@@ -132,9 +137,19 @@ async def search_all_villas_airbnb(background_tasks: BackgroundTasks, force: boo
     """Scans and matches all downloaded villas against Airbnb in background."""
     async def run_all_matches():
         villas = list_downloaded_villas(download_dir=DOWNLOAD_DIR)
-        for v in villas:
-            await match_villa_to_airbnb(folder_name=v["folder_name"], download_dir=DOWNLOAD_DIR, force_refresh=force)
-            await asyncio.sleep(1.0)
+        global_scraper_state.add_log(f"Initiating full Airbnb cross-listing scan across {len(villas)} mansions...")
+        for idx, v in enumerate(villas, 1):
+            fname = v["folder_name"]
+            global_scraper_state.message = f"Scanning Airbnb for {v['display_name']} ({idx}/{len(villas)})..."
+            global_scraper_state.add_log(f"Checking Airbnb for {v['display_name']}...")
+            res = await match_villa_to_airbnb(folder_name=fname, download_dir=DOWNLOAD_DIR, force_refresh=force)
+            if res.get("is_matched"):
+                global_scraper_state.add_log(f"  ✓ Found match: {res.get('primary_url')}")
+            else:
+                global_scraper_state.add_log(f"  → Prepared Airbnb search: {res.get('airbnb_search_url')}")
+            await asyncio.sleep(0.8)
+        global_scraper_state.message = "Airbnb cross-listing scan completed."
+        global_scraper_state.add_log("Airbnb scanning sequence completed.")
     
     background_tasks.add_task(run_all_matches)
     return {"status": "started", "message": "Searching Airbnb cross-listings for all villas in background."}
