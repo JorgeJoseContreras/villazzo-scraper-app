@@ -118,6 +118,28 @@ async def get_villas():
     }
 
 
+from airbnb_finder import match_villa_to_airbnb
+
+@app.post("/api/villas/{folder_name}/airbnb/search")
+async def search_single_villa_airbnb(folder_name: str, force: bool = False):
+    """Searches for corresponding Airbnb listing for a single villa."""
+    result = await match_villa_to_airbnb(folder_name=folder_name, download_dir=DOWNLOAD_DIR, force_refresh=force)
+    return result
+
+
+@app.post("/api/airbnb/search-all")
+async def search_all_villas_airbnb(background_tasks: BackgroundTasks, force: bool = False):
+    """Scans and matches all downloaded villas against Airbnb in background."""
+    async def run_all_matches():
+        villas = list_downloaded_villas(download_dir=DOWNLOAD_DIR)
+        for v in villas:
+            await match_villa_to_airbnb(folder_name=v["folder_name"], download_dir=DOWNLOAD_DIR, force_refresh=force)
+            await asyncio.sleep(1.0)
+    
+    background_tasks.add_task(run_all_matches)
+    return {"status": "started", "message": "Searching Airbnb cross-listings for all villas in background."}
+
+
 @app.get("/healthz")
 async def health_check():
     """Service health probe for container and deployment monitors."""

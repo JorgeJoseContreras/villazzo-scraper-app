@@ -478,12 +478,23 @@ def list_downloaded_villas(download_dir: Path = DEFAULT_DOWNLOAD_DIR) -> List[Di
                 image_urls = [f"/downloads/{folder_name}/{img.name}" for img in images]
                 hero_image = image_urls[0] if image_urls else None
 
+                # Check for cached airbnb match
+                airbnb_data = None
+                match_file = item / "airbnb_match.json"
+                if match_file.exists():
+                    try:
+                        import json
+                        airbnb_data = json.loads(match_file.read_text(encoding="utf-8"))
+                    except Exception:
+                        pass
+
                 villas.append({
                     "folder_name": folder_name,
                     "display_name": display_name,
                     "count": len(images),
                     "hero_image": hero_image,
-                    "images": image_urls
+                    "images": image_urls,
+                    "airbnb": airbnb_data
                 })
 
     return villas

@@ -3,12 +3,12 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Villazzo Miami — Luxury Portfolio Scraper & Gallery</title>
+  <title>Villazzo Miami — Luxury Portfolio Scraper & Airbnb Cross-Listing Finder</title>
   
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
   
-  <!-- Google Fonts: Inter & Cormorant Garamond / Playfair for Luxury Styling -->
+  <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -30,7 +30,8 @@
               400: '#e5c07b',
               500: '#d4af37',
               600: '#b89726',
-            }
+            },
+            airbnb: '#FF5A5F',
           }
         }
       }
@@ -93,13 +94,13 @@
             <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">Live</span>
           </div>
           <h1 class="text-xl sm:text-2xl font-serif font-bold tracking-tight text-slate-100">
-            Villazzo <span class="gold-gradient-text">Miami</span> Portfolio
+            Villazzo <span class="gold-gradient-text">Miami</span> & Airbnb Matcher
           </h1>
         </div>
       </div>
 
       <!-- Quick Metrics & Actions -->
-      <div class="flex items-center gap-3 sm:gap-4">
+      <div class="flex items-center gap-2 sm:gap-3">
         <!-- Stat Pill 1 -->
         <div class="hidden md:flex flex-col items-end px-3 py-1.5 rounded-lg bg-slate-900/60 border border-slate-800">
           <span class="text-[10px] font-medium uppercase tracking-wider text-slate-400">Total Mansions</span>
@@ -111,6 +112,16 @@
           <span class="text-[10px] font-medium uppercase tracking-wider text-slate-400">Photos Saved</span>
           <span id="stat-total-photos" class="text-sm font-bold text-gold-400">{{ total_photos }}</span>
         </div>
+
+        <!-- Find All on Airbnb Button -->
+        <button 
+          onclick="searchAllAirbnb()" 
+          title="Scan All Mansions for Airbnb Listings"
+          class="hidden sm:inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-slate-900 border border-[#FF5A5F]/40 hover:bg-[#FF5A5F]/10 text-[#FF5A5F] text-xs font-semibold transition-all"
+        >
+          <i data-lucide="compass" class="w-4 h-4"></i>
+          <span>Scan Airbnb</span>
+        </button>
 
         <!-- Refresh Button -->
         <button 
@@ -153,16 +164,16 @@
               <span id="status-time" class="text-xs text-slate-500">Ready for job execution</span>
             </div>
             <p id="status-message" class="text-sm font-medium text-slate-200 mt-1">
-              Click "Run Scraper" to fetch high-resolution gallery images from Villazzo's Miami portfolio.
+              Click "Run Scraper" to fetch high-resolution gallery images or use "Scan Airbnb" to cross-match listings.
             </p>
           </div>
         </div>
 
         <!-- Controls: Force Rescrape Checkbox & Log Toggle -->
-        <div class="flex items-center gap-4 text-xs">
+        <div class="flex items-center gap-3 text-xs">
           <label class="flex items-center gap-2 cursor-pointer select-none text-slate-300 hover:text-white bg-slate-900/90 px-3 py-2 rounded-lg border border-slate-800">
             <input type="checkbox" id="force-rescrape-check" class="w-4 h-4 rounded border-slate-700 text-gold-500 focus:ring-gold-500 bg-slate-950">
-            <span>Force Re-scrape All</span>
+            <span>Force Re-scrape</span>
           </label>
           
           <button 
@@ -189,10 +200,10 @@
         </div>
       </div>
 
-      <!-- LIVE LOG TERMINAL DRAWER (Collapsible) -->
+      <!-- LIVE LOG TERMINAL DRAWER -->
       <div id="terminal-drawer" class="hidden mt-4 pt-4 border-t border-slate-800">
         <div class="bg-black/90 rounded-xl p-3.5 font-mono text-xs text-slate-300 border border-slate-800/80 max-h-48 overflow-y-auto space-y-1" id="terminal-logs">
-          <div class="text-slate-500 italic">// Automation engine initialized. Ready to scrape.</div>
+          <div class="text-slate-500 italic">// Automation engine initialized. Ready to scrape or match Airbnb.</div>
         </div>
       </div>
     </section>
@@ -204,10 +215,10 @@
       <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h2 class="text-2xl font-serif font-bold text-slate-100 flex items-center gap-2">
-            Miami Mansions & Waterfront Villas
+            Miami Mansions & Airbnb Cross-Listings
           </h2>
           <p class="text-sm text-slate-400 mt-0.5">
-            Full-resolution architectural photo galleries scraped and served from local storage.
+            Full-resolution photographs with automated Airbnb room link matching.
           </p>
         </div>
 
@@ -226,62 +237,10 @@
 
       <!-- Grid of Mansion Cards -->
       <div id="villas-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-        <!-- Jinja / JS Injected Cards -->
-        {% for villa in villas %}
-        <div class="villa-card glass-card rounded-2xl overflow-hidden flex flex-col group" data-name="{{ villa.display_name }}">
-          
-          <!-- Hero Thumbnail -->
-          <div class="relative aspect-[4/3] bg-slate-900 overflow-hidden cursor-pointer" onclick="openGallery('{{ villa.folder_name }}', 0)">
-            {% if villa.hero_image %}
-            <img 
-              src="{{ villa.hero_image }}" 
-              alt="{{ villa.display_name }}"
-              loading="lazy"
-              class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-            />
-            {% else %}
-            <div class="w-full h-full flex items-center justify-center text-slate-600">
-              <i data-lucide="image" class="w-12 h-12 stroke-1"></i>
-            </div>
-            {% endif %}
-
-            <div class="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-transparent opacity-80 group-hover:opacity-60 transition-opacity"></div>
-            
-            <!-- Photo Count Badge -->
-            <div class="absolute bottom-3 left-3 flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-950/80 backdrop-blur-md border border-white/10 text-xs font-semibold text-gold-400">
-              <i data-lucide="camera" class="w-3.5 h-3.5"></i>
-              <span>{{ villa.count }} High-Res Photos</span>
-            </div>
-          </div>
-
-          <!-- Card Content -->
-          <div class="p-5 flex-1 flex flex-col justify-between">
-            <div>
-              <h3 class="text-lg font-serif font-bold text-slate-100 group-hover:text-gold-400 transition-colors">
-                {{ villa.display_name }}
-              </h3>
-              <p class="text-xs text-slate-400 mt-1 font-mono">
-                ./downloads/{{ villa.folder_name }}/
-              </p>
-            </div>
-
-            <!-- View Gallery Button -->
-            <div class="pt-4 mt-4 border-t border-slate-800/80 flex items-center justify-between">
-              <button 
-                onclick="openGallery('{{ villa.folder_name }}', 0)"
-                class="w-full flex items-center justify-center gap-2 py-2 px-4 rounded-xl bg-slate-800/90 hover:bg-gold-500 hover:text-slate-950 text-slate-200 text-xs font-semibold transition-all duration-200"
-              >
-                <i data-lucide="images" class="w-4 h-4"></i>
-                <span>View Full Gallery</span>
-              </button>
-            </div>
-          </div>
-
-        </div>
-        {% endfor %}
+        <!-- Rendered by JavaScript -->
       </div>
 
-      <!-- EMPTY STATE (Shown if 0 villas downloaded) -->
+      <!-- EMPTY STATE -->
       <div id="empty-state" class="{% if villas %}hidden{% endif %} text-center py-20 px-4 glass-panel rounded-2xl border-dashed border-slate-800">
         <div class="w-16 h-16 rounded-2xl bg-gold-400/10 border border-gold-500/20 text-gold-400 flex items-center justify-center mx-auto mb-4">
           <i data-lucide="sparkles" class="w-8 h-8"></i>
@@ -308,10 +267,10 @@
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500">
       <div class="flex items-center gap-2">
         <span class="w-2 h-2 rounded-full bg-gold-500"></span>
-        <span>Target Source: <a href="https://www.villazzo.com/rental-villas/miami/" target="_blank" class="text-slate-400 hover:text-gold-400 underline decoration-slate-700">villazzo.com/rental-villas/miami/</a></span>
+        <span>Source: <a href="https://www.villazzo.com/rental-villas/miami/" target="_blank" class="text-slate-400 hover:text-gold-400 underline decoration-slate-700">villazzo.com/rental-villas/miami/</a></span>
       </div>
       <div>
-        <span>FastAPI + Playwright / HTTPX Engine &bull; Render Cloud Ready</span>
+        <span>FastAPI + Airbnb Cross-Listing Intelligence Engine</span>
       </div>
     </div>
   </footer>
@@ -328,7 +287,31 @@
         <p id="modal-photo-counter" class="text-xs text-gold-400 font-mono">Photo 1 of 24</p>
       </div>
 
-      <div class="flex items-center gap-3">
+      <div class="flex items-center gap-2 sm:gap-3">
+        <!-- Direct Airbnb Link if matched -->
+        <a 
+          id="modal-airbnb-link" 
+          href="#" 
+          target="_blank" 
+          title="Open Matching Airbnb Listing"
+          class="hidden p-2 rounded-lg bg-[#FF5A5F]/20 border border-[#FF5A5F]/50 text-[#FF5A5F] hover:bg-[#FF5A5F] hover:text-white text-xs font-semibold flex items-center gap-1.5 transition-colors"
+        >
+          <i data-lucide="home" class="w-4 h-4"></i>
+          <span>Airbnb Listing</span>
+        </a>
+
+        <!-- Open Google Lens Visual Search -->
+        <a 
+          id="modal-lens-link" 
+          href="#" 
+          target="_blank" 
+          title="Reverse Search Image on Web / Airbnb"
+          class="p-2 rounded-lg bg-slate-900 border border-slate-800 hover:border-slate-700 text-slate-300 hover:text-white text-xs flex items-center gap-1.5"
+        >
+          <i data-lucide="scan" class="w-4 h-4"></i>
+          <span class="hidden sm:inline">Google Lens Match</span>
+        </a>
+
         <!-- Open Raw Link -->
         <a 
           id="modal-raw-link" 
@@ -393,7 +376,6 @@
 
   <!-- APPLICATION SCRIPTS -->
   <script>
-    // State management
     let state = {
       villas: [],
       activeVilla: null,
@@ -402,14 +384,12 @@
       isPolling: false
     };
 
-    // Initialize Lucide Icons
     document.addEventListener('DOMContentLoaded', () => {
       lucide.createIcons();
       fetchVillasData();
       checkScrapeStatus();
     });
 
-    // Keyboard navigation for gallery
     document.addEventListener('keydown', (e) => {
       const modal = document.getElementById('gallery-modal');
       if (!modal.classList.contains('hidden')) {
@@ -419,7 +399,6 @@
       }
     });
 
-    // Toggle log viewer
     function toggleConsoleLogs() {
       const drawer = document.getElementById('terminal-drawer');
       const btnText = document.getElementById('btn-toggle-logs-text');
@@ -432,7 +411,6 @@
       }
     }
 
-    // Trigger Scraping Process
     async function triggerScrape(isForce = false) {
       const forceRescrape = isForce || document.getElementById('force-rescrape-check').checked;
       const btn = document.getElementById('btn-start-scrape');
@@ -446,11 +424,8 @@
           body: JSON.stringify({ force_rescrape: forceRescrape })
         });
         const data = await res.json();
-        
-        // Show console logs automatically upon starting
         document.getElementById('terminal-drawer').classList.remove('hidden');
         document.getElementById('btn-toggle-logs-text').textContent = 'Hide Logs';
-
         startPolling();
       } catch (err) {
         console.error('Failed to initiate scrape:', err);
@@ -462,7 +437,6 @@
       }
     }
 
-    // Start Polling Scraper Status
     function startPolling() {
       if (state.isPolling) return;
       state.isPolling = true;
@@ -471,7 +445,6 @@
       checkScrapeStatus();
     }
 
-    // Stop Polling
     function stopPolling() {
       state.isPolling = false;
       if (state.pollTimer) {
@@ -480,7 +453,6 @@
       }
     }
 
-    // Check Scraper Status & Update UI
     async function checkScrapeStatus() {
       try {
         const res = await fetch('/api/scrape/status');
@@ -492,7 +464,7 @@
         } else {
           if (state.isPolling) {
             stopPolling();
-            fetchVillasData(); // Refresh grid after scrape completes
+            fetchVillasData();
           }
         }
       } catch (err) {
@@ -500,7 +472,6 @@
       }
     }
 
-    // Update Status Banner and Progress Bar
     function updateStatusUI(data) {
       const indicator = document.getElementById('status-indicator');
       const badge = document.getElementById('status-badge');
@@ -511,7 +482,6 @@
       const detailLabel = document.getElementById('progress-detail');
       const logsContainer = document.getElementById('terminal-logs');
 
-      // Update badge & indicator
       if (data.status === 'running') {
         indicator.className = 'w-3 h-3 rounded-full bg-amber-400 animate-pulse';
         badge.className = 'text-xs uppercase font-bold tracking-wider px-2.5 py-0.5 rounded-md bg-amber-500/20 text-amber-300 border border-amber-500/30';
@@ -536,7 +506,6 @@
 
       message.textContent = data.message || 'Scraper is idle.';
       
-      // Progress calculation
       const pct = data.progress_percent || 0;
       barFill.style.width = `${pct}%`;
       percentLabel.textContent = `${pct}%`;
@@ -544,14 +513,12 @@
         ? `Processed ${data.processed_villas} of ${data.total_villas} mansions (${data.total_images_downloaded} photos saved)` 
         : 'Standby';
 
-      // Update terminal logs
       if (data.logs && data.logs.length > 0) {
         logsContainer.innerHTML = data.logs.map(l => `<div class="leading-relaxed">${escapeHtml(l)}</div>`).join('');
         logsContainer.scrollTop = logsContainer.scrollHeight;
       }
     }
 
-    // Fetch All Villas List from API
     async function fetchVillasData() {
       try {
         const res = await fetch('/api/villas');
@@ -567,7 +534,46 @@
       }
     }
 
-    // Render Cards in Grid
+    // Single Villa Airbnb Search
+    async function searchAirbnb(folderName) {
+      const btn = document.getElementById(`btn-airbnb-${folderName}`);
+      if (btn) {
+        btn.innerHTML = `<i data-lucide="loader-2" class="w-3.5 h-3.5 animate-spin"></i><span>Searching...</span>`;
+        btn.disabled = true;
+      }
+
+      try {
+        const res = await fetch(`/api/villas/${folderName}/airbnb/search`, { method: 'POST' });
+        const matchData = await res.json();
+        
+        // Update local state
+        const targetVilla = state.villas.find(v => v.folder_name === folderName);
+        if (targetVilla) {
+          targetVilla.airbnb = matchData;
+        }
+        renderVillasGrid(state.villas);
+      } catch (err) {
+        console.error('Airbnb search failed:', err);
+      }
+    }
+
+    // Search All Villas on Airbnb
+    async function searchAllAirbnb() {
+      try {
+        await fetch('/api/airbnb/search-all', { method: 'POST' });
+        document.getElementById('status-message').textContent = 'Scanning Airbnb listings for all mansions in background...';
+        // Poll and refresh
+        let count = 0;
+        const interval = setInterval(async () => {
+          count++;
+          await fetchVillasData();
+          if (count >= 8) clearInterval(interval);
+        }, 2000);
+      } catch (err) {
+        console.error('Scan all error:', err);
+      }
+    }
+
     function renderVillasGrid(villas) {
       const grid = document.getElementById('villas-grid');
       const empty = document.getElementById('empty-state');
@@ -579,47 +585,106 @@
       }
 
       empty.classList.add('hidden');
-      grid.innerHTML = villas.map(villa => `
-        <div class="villa-card glass-card rounded-2xl overflow-hidden flex flex-col group" data-name="${escapeHtml(villa.display_name)}">
-          <div class="relative aspect-[4/3] bg-slate-900 overflow-hidden cursor-pointer" onclick="openGallery('${escapeHtml(villa.folder_name)}', 0)">
-            ${villa.hero_image 
-              ? `<img src="${villa.hero_image}" alt="${escapeHtml(villa.display_name)}" loading="lazy" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />`
-              : `<div class="w-full h-full flex items-center justify-center text-slate-600"><i data-lucide="image" class="w-12 h-12 stroke-1"></i></div>`
-            }
-            <div class="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-transparent opacity-80 group-hover:opacity-60 transition-opacity"></div>
-            <div class="absolute bottom-3 left-3 flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-950/80 backdrop-blur-md border border-white/10 text-xs font-semibold text-gold-400">
-              <i data-lucide="camera" class="w-3.5 h-3.5"></i>
-              <span>${villa.count} High-Res Photos</span>
+      grid.innerHTML = villas.map(villa => {
+        const airbnb = villa.airbnb;
+        const isMatched = airbnb && airbnb.is_matched && airbnb.primary_url;
+        
+        let airbnbBadge = '';
+        if (isMatched) {
+          airbnbBadge = `
+            <a 
+              href="${escapeHtml(airbnb.primary_url)}" 
+              target="_blank"
+              onclick="event.stopPropagation()"
+              title="Verified on Airbnb: ${escapeHtml(airbnb.primary_url)}"
+              class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-[#FF5A5F] hover:bg-[#E04B50] text-white text-[11px] font-bold shadow-md shadow-[#FF5A5F]/20 transition-transform active:scale-95"
+            >
+              <i data-lucide="home" class="w-3.5 h-3.5"></i>
+              <span>Airbnb Listing ↗</span>
+            </a>
+          `;
+        } else {
+          airbnbBadge = `
+            <button 
+              id="btn-airbnb-${escapeHtml(villa.folder_name)}"
+              onclick="event.stopPropagation(); searchAirbnb('${escapeHtml(villa.folder_name)}')"
+              title="Scan Airbnb for matching listing"
+              class="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-slate-900/90 hover:bg-slate-800 border border-slate-700 text-slate-300 hover:text-white text-[11px] font-medium transition-colors"
+            >
+              <i data-lucide="compass" class="w-3 h-3 text-[#FF5A5F]"></i>
+              <span>Find on Airbnb</span>
+            </button>
+          `;
+        }
+
+        return `
+          <div class="villa-card glass-card rounded-2xl overflow-hidden flex flex-col group" data-name="${escapeHtml(villa.display_name)}">
+            <div class="relative aspect-[4/3] bg-slate-900 overflow-hidden cursor-pointer" onclick="openGallery('${escapeHtml(villa.folder_name)}', 0)">
+              ${villa.hero_image 
+                ? `<img src="${villa.hero_image}" alt="${escapeHtml(villa.display_name)}" loading="lazy" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />`
+                : `<div class="w-full h-full flex items-center justify-center text-slate-600"><i data-lucide="image" class="w-12 h-12 stroke-1"></i></div>`
+              }
+              <div class="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-transparent opacity-80 group-hover:opacity-60 transition-opacity"></div>
+              
+              <!-- Photo Count Badge -->
+              <div class="absolute bottom-3 left-3 flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-950/80 backdrop-blur-md border border-white/10 text-xs font-semibold text-gold-400">
+                <i data-lucide="camera" class="w-3.5 h-3.5"></i>
+                <span>${villa.count} Photos</span>
+              </div>
+
+              <!-- Top Right: Airbnb Status Pill -->
+              <div class="absolute top-3 right-3">
+                ${airbnbBadge}
+              </div>
+            </div>
+
+            <div class="p-5 flex-1 flex flex-col justify-between">
+              <div>
+                <h3 class="text-lg font-serif font-bold text-slate-100 group-hover:text-gold-400 transition-colors">
+                  ${escapeHtml(villa.display_name)}
+                </h3>
+                <p class="text-xs text-slate-400 mt-1 font-mono">
+                  ./downloads/${escapeHtml(villa.folder_name)}/
+                </p>
+              </div>
+
+              <div class="pt-4 mt-4 border-t border-slate-800/80 flex items-center justify-between gap-2">
+                <button 
+                  onclick="openGallery('${escapeHtml(villa.folder_name)}', 0)"
+                  class="flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-xl bg-slate-800/90 hover:bg-gold-500 hover:text-slate-950 text-slate-200 text-xs font-semibold transition-all duration-200"
+                >
+                  <i data-lucide="images" class="w-4 h-4"></i>
+                  <span>View Photos</span>
+                </button>
+                
+                ${isMatched ? `
+                  <a 
+                    href="${escapeHtml(airbnb.primary_url)}"
+                    target="_blank"
+                    title="Open on Airbnb"
+                    class="p-2 rounded-xl bg-[#FF5A5F]/15 hover:bg-[#FF5A5F] border border-[#FF5A5F]/30 text-[#FF5A5F] hover:text-white transition-colors"
+                  >
+                    <i data-lucide="external-link" class="w-4 h-4"></i>
+                  </a>
+                ` : `
+                  <a 
+                    href="https://www.airbnb.com/s/Miami--FL/homes?query=${encodeURIComponent(villa.display_name)}"
+                    target="_blank"
+                    title="Search on Airbnb"
+                    class="p-2 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-400 hover:text-white transition-colors"
+                  >
+                    <i data-lucide="search" class="w-4 h-4"></i>
+                  </a>
+                `}
+              </div>
             </div>
           </div>
-
-          <div class="p-5 flex-1 flex flex-col justify-between">
-            <div>
-              <h3 class="text-lg font-serif font-bold text-slate-100 group-hover:text-gold-400 transition-colors">
-                ${escapeHtml(villa.display_name)}
-              </h3>
-              <p class="text-xs text-slate-400 mt-1 font-mono">
-                ./downloads/${escapeHtml(villa.folder_name)}/
-              </p>
-            </div>
-
-            <div class="pt-4 mt-4 border-t border-slate-800/80 flex items-center justify-between">
-              <button 
-                onclick="openGallery('${escapeHtml(villa.folder_name)}', 0)"
-                class="w-full flex items-center justify-center gap-2 py-2 px-4 rounded-xl bg-slate-800/90 hover:bg-gold-500 hover:text-slate-950 text-slate-200 text-xs font-semibold transition-all duration-200"
-              >
-                <i data-lucide="images" class="w-4 h-4"></i>
-                <span>View Full Gallery</span>
-              </button>
-            </div>
-          </div>
-        </div>
-      `).join('');
+        `;
+      }).join('');
 
       lucide.createIcons();
     }
 
-    // Filter Villas by Search Query
     function filterVillas() {
       const q = document.getElementById('search-input').value.toLowerCase().trim();
       const cards = document.querySelectorAll('.villa-card');
@@ -633,7 +698,6 @@
       });
     }
 
-    // OPEN GALLERY LIGHTBOX
     function openGallery(folderName, startIndex = 0) {
       const villa = state.villas.find(v => v.folder_name === folderName);
       if (!villa || !villa.images || villa.images.length === 0) return;
@@ -652,7 +716,6 @@
       lucide.createIcons();
     }
 
-    // CLOSE GALLERY LIGHTBOX
     function closeGallery() {
       const modal = document.getElementById('gallery-modal');
       modal.classList.add('hidden');
@@ -660,7 +723,6 @@
       state.activeVilla = null;
     }
 
-    // NAVIGATION
     function nextImage() {
       if (!state.activeVilla) return;
       state.activeImageIndex = (state.activeImageIndex + 1) % state.activeVilla.images.length;
@@ -679,7 +741,6 @@
       updateLightboxView();
     }
 
-    // UPDATE LIGHTBOX DISPLAY
     function updateLightboxView() {
       if (!state.activeVilla) return;
       const total = state.activeVilla.images.length;
@@ -693,7 +754,21 @@
       const rawLink = document.getElementById('modal-raw-link');
       rawLink.href = currentUrl;
 
-      // Update active thumbnail border
+      // Google Lens Reverse Match Link
+      const lensLink = document.getElementById('modal-lens-link');
+      const origin = window.location.origin;
+      const fullImageUrl = currentUrl.startsWith('http') ? currentUrl : `${origin}${currentUrl}`;
+      lensLink.href = `https://lens.google.com/uploadbyurl?url=${encodeURIComponent(fullImageUrl)}`;
+
+      // Airbnb Header Link
+      const airbnbLink = document.getElementById('modal-airbnb-link');
+      if (state.activeVilla.airbnb && state.activeVilla.airbnb.is_matched && state.activeVilla.airbnb.primary_url) {
+        airbnbLink.href = state.activeVilla.airbnb.primary_url;
+        airbnbLink.classList.remove('hidden');
+      } else {
+        airbnbLink.classList.add('hidden');
+      }
+
       document.querySelectorAll('.thumb-btn').forEach((btn, idx) => {
         if (idx === state.activeImageIndex) {
           btn.className = 'thumb-btn relative w-14 h-14 rounded-lg overflow-hidden border-2 border-gold-400 shrink-0 scale-105 transition-all';
@@ -703,7 +778,6 @@
       });
     }
 
-    // RENDER THUMBNAIL STRIP
     function renderThumbnails() {
       if (!state.activeVilla) return;
       const container = document.getElementById('modal-thumbnails');
@@ -717,7 +791,6 @@
       `).join('');
     }
 
-    // Helper: Escape HTML
     function escapeHtml(str) {
       if (!str) return '';
       return String(str).replace(/[&<>"']/g, function(m) {
