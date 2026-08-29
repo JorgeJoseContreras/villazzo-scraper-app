@@ -1,0 +1,729 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full bg-slate-950 text-slate-100">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Villazzo Miami — Luxury Portfolio Scraper & Gallery</title>
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Google Fonts: Inter & Cormorant Garamond / Playfair for Luxury Styling -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+            serif: ['Cinzel', 'serif'],
+          },
+          colors: {
+            gold: {
+              400: '#e5c07b',
+              500: '#d4af37',
+              600: '#b89726',
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #090d16;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #232d3f;
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #d4af37;
+    }
+    .gold-gradient-text {
+      background: linear-gradient(135deg, #FFF6D6 0%, #D4AF37 50%, #AA820A 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .glass-panel {
+      background: rgba(15, 23, 42, 0.75);
+      backdrop-filter: blur(16px);
+      border: 1px solid rgba(212, 175, 55, 0.15);
+    }
+    .glass-card {
+      background: rgba(15, 23, 42, 0.85);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .glass-card:hover {
+      border-color: rgba(212, 175, 55, 0.4);
+      transform: translateY(-4px);
+      box-shadow: 0 20px 30px -10px rgba(0, 0, 0, 0.5), 0 0 15px 0 rgba(212, 175, 55, 0.1);
+    }
+  </style>
+</head>
+<body class="h-full flex flex-col antialiased selection:bg-gold-500 selection:text-slate-950">
+
+  <!-- TOP NAVIGATION / HEADER -->
+  <header class="sticky top-0 z-40 glass-panel border-b border-slate-800/80">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
+      
+      <!-- Brand & Title -->
+      <div class="flex items-center gap-4">
+        <div class="w-11 h-11 rounded-xl bg-gradient-to-br from-gold-400/20 to-gold-600/10 border border-gold-500/30 flex items-center justify-center text-gold-400 shadow-inner">
+          <i data-lucide="palmtree" class="w-6 h-6"></i>
+        </div>
+        <div>
+          <div class="flex items-center gap-2.5">
+            <span class="text-xs uppercase tracking-widest font-semibold text-gold-400/80">Automated Pipeline</span>
+            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">Live</span>
+          </div>
+          <h1 class="text-xl sm:text-2xl font-serif font-bold tracking-tight text-slate-100">
+            Villazzo <span class="gold-gradient-text">Miami</span> Portfolio
+          </h1>
+        </div>
+      </div>
+
+      <!-- Quick Metrics & Actions -->
+      <div class="flex items-center gap-3 sm:gap-4">
+        <!-- Stat Pill 1 -->
+        <div class="hidden md:flex flex-col items-end px-3 py-1.5 rounded-lg bg-slate-900/60 border border-slate-800">
+          <span class="text-[10px] font-medium uppercase tracking-wider text-slate-400">Total Mansions</span>
+          <span id="stat-total-villas" class="text-sm font-bold text-slate-100">{{ total_villas }}</span>
+        </div>
+
+        <!-- Stat Pill 2 -->
+        <div class="hidden md:flex flex-col items-end px-3 py-1.5 rounded-lg bg-slate-900/60 border border-slate-800">
+          <span class="text-[10px] font-medium uppercase tracking-wider text-slate-400">Photos Saved</span>
+          <span id="stat-total-photos" class="text-sm font-bold text-gold-400">{{ total_photos }}</span>
+        </div>
+
+        <!-- Refresh Button -->
+        <button 
+          onclick="fetchVillasData()" 
+          title="Refresh Data"
+          class="p-2.5 rounded-xl bg-slate-900 border border-slate-800 hover:border-slate-700 text-slate-300 hover:text-white transition-colors"
+        >
+          <i data-lucide="refresh-cw" class="w-5 h-5"></i>
+        </button>
+
+        <!-- Automation Action Trigger Button -->
+        <button 
+          id="btn-start-scrape"
+          onclick="triggerScrape(false)"
+          class="relative inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl font-medium text-sm text-slate-950 bg-gradient-to-r from-amber-200 via-gold-400 to-amber-500 hover:from-amber-100 hover:to-amber-400 shadow-lg shadow-gold-500/20 active:scale-95 transition-all duration-200"
+        >
+          <i data-lucide="play" class="w-4 h-4 fill-current"></i>
+          <span>Run Scraper</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN VIEWPORT -->
+  <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+    
+    <!-- AUTOMATION CONSOLE & STATUS CARD -->
+    <section id="status-container" class="glass-panel rounded-2xl p-5 sm:p-6 shadow-2xl relative overflow-hidden">
+      <!-- Background Glow -->
+      <div class="absolute -right-16 -top-16 w-64 h-64 rounded-full bg-gold-500/5 blur-3xl pointer-events-none"></div>
+
+      <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-4 border-b border-slate-800/80">
+        <div class="flex items-center gap-3">
+          <div id="status-indicator" class="w-3 h-3 rounded-full bg-slate-500"></div>
+          <div>
+            <div class="flex items-center gap-2">
+              <span id="status-badge" class="text-xs uppercase font-bold tracking-wider px-2.5 py-0.5 rounded-md bg-slate-800 text-slate-300 border border-slate-700">
+                IDLE
+              </span>
+              <span id="status-time" class="text-xs text-slate-500">Ready for job execution</span>
+            </div>
+            <p id="status-message" class="text-sm font-medium text-slate-200 mt-1">
+              Click "Run Scraper" to fetch high-resolution gallery images from Villazzo's Miami portfolio.
+            </p>
+          </div>
+        </div>
+
+        <!-- Controls: Force Rescrape Checkbox & Log Toggle -->
+        <div class="flex items-center gap-4 text-xs">
+          <label class="flex items-center gap-2 cursor-pointer select-none text-slate-300 hover:text-white bg-slate-900/90 px-3 py-2 rounded-lg border border-slate-800">
+            <input type="checkbox" id="force-rescrape-check" class="w-4 h-4 rounded border-slate-700 text-gold-500 focus:ring-gold-500 bg-slate-950">
+            <span>Force Re-scrape All</span>
+          </label>
+          
+          <button 
+            onclick="toggleConsoleLogs()" 
+            class="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-slate-900 border border-slate-800 text-slate-400 hover:text-slate-200 transition-colors"
+          >
+            <i data-lucide="terminal" class="w-3.5 h-3.5"></i>
+            <span id="btn-toggle-logs-text">View Logs</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- PROGRESS BAR -->
+      <div class="mt-4 space-y-1.5">
+        <div class="flex justify-between text-xs font-semibold text-slate-400">
+          <span id="progress-detail">Awaiting trigger</span>
+          <span id="progress-percent" class="text-gold-400">0%</span>
+        </div>
+        <div class="w-full bg-slate-900/80 rounded-full h-2.5 overflow-hidden border border-slate-800">
+          <div 
+            id="progress-bar-fill" 
+            class="h-full bg-gradient-to-r from-amber-400 to-gold-500 rounded-full transition-all duration-300 w-0"
+          ></div>
+        </div>
+      </div>
+
+      <!-- LIVE LOG TERMINAL DRAWER (Collapsible) -->
+      <div id="terminal-drawer" class="hidden mt-4 pt-4 border-t border-slate-800">
+        <div class="bg-black/90 rounded-xl p-3.5 font-mono text-xs text-slate-300 border border-slate-800/80 max-h-48 overflow-y-auto space-y-1" id="terminal-logs">
+          <div class="text-slate-500 italic">// Automation engine initialized. Ready to scrape.</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- MANSIONS GALLERY GRID SECTION -->
+    <section class="space-y-6">
+      
+      <!-- Section Header -->
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h2 class="text-2xl font-serif font-bold text-slate-100 flex items-center gap-2">
+            Miami Mansions & Waterfront Villas
+          </h2>
+          <p class="text-sm text-slate-400 mt-0.5">
+            Full-resolution architectural photo galleries scraped and served from local storage.
+          </p>
+        </div>
+
+        <!-- Filter / Search input -->
+        <div class="relative w-full sm:w-64">
+          <i data-lucide="search" class="w-4 h-4 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2"></i>
+          <input 
+            type="text" 
+            id="search-input" 
+            placeholder="Search mansions..." 
+            oninput="filterVillas()"
+            class="w-full pl-9 pr-4 py-2 bg-slate-900/90 border border-slate-800 rounded-xl text-sm text-slate-200 placeholder-slate-500 focus:outline-none focus:border-gold-500/50 transition-colors"
+          />
+        </div>
+      </div>
+
+      <!-- Grid of Mansion Cards -->
+      <div id="villas-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        <!-- Jinja / JS Injected Cards -->
+        {% for villa in villas %}
+        <div class="villa-card glass-card rounded-2xl overflow-hidden flex flex-col group" data-name="{{ villa.display_name }}">
+          
+          <!-- Hero Thumbnail -->
+          <div class="relative aspect-[4/3] bg-slate-900 overflow-hidden cursor-pointer" onclick="openGallery('{{ villa.folder_name }}', 0)">
+            {% if villa.hero_image %}
+            <img 
+              src="{{ villa.hero_image }}" 
+              alt="{{ villa.display_name }}"
+              loading="lazy"
+              class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+            />
+            {% else %}
+            <div class="w-full h-full flex items-center justify-center text-slate-600">
+              <i data-lucide="image" class="w-12 h-12 stroke-1"></i>
+            </div>
+            {% endif %}
+
+            <div class="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-transparent opacity-80 group-hover:opacity-60 transition-opacity"></div>
+            
+            <!-- Photo Count Badge -->
+            <div class="absolute bottom-3 left-3 flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-950/80 backdrop-blur-md border border-white/10 text-xs font-semibold text-gold-400">
+              <i data-lucide="camera" class="w-3.5 h-3.5"></i>
+              <span>{{ villa.count }} High-Res Photos</span>
+            </div>
+          </div>
+
+          <!-- Card Content -->
+          <div class="p-5 flex-1 flex flex-col justify-between">
+            <div>
+              <h3 class="text-lg font-serif font-bold text-slate-100 group-hover:text-gold-400 transition-colors">
+                {{ villa.display_name }}
+              </h3>
+              <p class="text-xs text-slate-400 mt-1 font-mono">
+                ./downloads/{{ villa.folder_name }}/
+              </p>
+            </div>
+
+            <!-- View Gallery Button -->
+            <div class="pt-4 mt-4 border-t border-slate-800/80 flex items-center justify-between">
+              <button 
+                onclick="openGallery('{{ villa.folder_name }}', 0)"
+                class="w-full flex items-center justify-center gap-2 py-2 px-4 rounded-xl bg-slate-800/90 hover:bg-gold-500 hover:text-slate-950 text-slate-200 text-xs font-semibold transition-all duration-200"
+              >
+                <i data-lucide="images" class="w-4 h-4"></i>
+                <span>View Full Gallery</span>
+              </button>
+            </div>
+          </div>
+
+        </div>
+        {% endfor %}
+      </div>
+
+      <!-- EMPTY STATE (Shown if 0 villas downloaded) -->
+      <div id="empty-state" class="{% if villas %}hidden{% endif %} text-center py-20 px-4 glass-panel rounded-2xl border-dashed border-slate-800">
+        <div class="w-16 h-16 rounded-2xl bg-gold-400/10 border border-gold-500/20 text-gold-400 flex items-center justify-center mx-auto mb-4">
+          <i data-lucide="sparkles" class="w-8 h-8"></i>
+        </div>
+        <h3 class="text-xl font-serif font-bold text-slate-200">No Villa Images Downloaded Yet</h3>
+        <p class="text-slate-400 text-sm max-w-md mx-auto mt-2">
+          Trigger the automated scraper to crawl Villazzo's Miami portfolio and download the complete collection of high-resolution mansion photographs.
+        </p>
+        <button 
+          onclick="triggerScrape(false)"
+          class="mt-6 inline-flex items-center gap-2 px-6 py-3 rounded-xl font-semibold text-sm text-slate-950 bg-gradient-to-r from-amber-300 via-gold-400 to-amber-500 hover:brightness-110 shadow-lg shadow-gold-500/20 transition-all"
+        >
+          <i data-lucide="play" class="w-4 h-4 fill-current"></i>
+          <span>Launch First Scrape</span>
+        </button>
+      </div>
+
+    </section>
+
+  </main>
+
+  <!-- FOOTER -->
+  <footer class="mt-auto border-t border-slate-800/80 bg-slate-950/80 py-6">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500">
+      <div class="flex items-center gap-2">
+        <span class="w-2 h-2 rounded-full bg-gold-500"></span>
+        <span>Target Source: <a href="https://www.villazzo.com/rental-villas/miami/" target="_blank" class="text-slate-400 hover:text-gold-400 underline decoration-slate-700">villazzo.com/rental-villas/miami/</a></span>
+      </div>
+      <div>
+        <span>FastAPI + Playwright / HTTPX Engine &bull; Render Cloud Ready</span>
+      </div>
+    </div>
+  </footer>
+
+  <!-- FULLSCREEN LIGHTBOX / GALLERY MODAL -->
+  <div 
+    id="gallery-modal" 
+    class="fixed inset-0 z-50 bg-slate-950/95 backdrop-blur-xl hidden flex-col transition-all duration-300"
+  >
+    <!-- Modal Header -->
+    <div class="px-6 py-4 flex items-center justify-between border-b border-slate-800">
+      <div>
+        <h3 id="modal-villa-title" class="text-lg font-serif font-bold text-white">Villa Name</h3>
+        <p id="modal-photo-counter" class="text-xs text-gold-400 font-mono">Photo 1 of 24</p>
+      </div>
+
+      <div class="flex items-center gap-3">
+        <!-- Open Raw Link -->
+        <a 
+          id="modal-raw-link" 
+          href="#" 
+          target="_blank" 
+          title="Open Original Image in New Tab"
+          class="p-2 rounded-lg bg-slate-900 border border-slate-800 hover:border-slate-700 text-slate-300 hover:text-white text-xs flex items-center gap-1.5"
+        >
+          <i data-lucide="external-link" class="w-4 h-4"></i>
+          <span class="hidden sm:inline">Original Asset</span>
+        </a>
+
+        <!-- Close Modal -->
+        <button 
+          onclick="closeGallery()" 
+          class="p-2 rounded-lg bg-slate-900 border border-slate-800 hover:bg-rose-500/20 hover:border-rose-500/40 text-slate-300 hover:text-rose-400 transition-colors"
+        >
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- Modal Body / Active Image Stage -->
+    <div class="relative flex-1 flex items-center justify-center p-4 sm:p-8 overflow-hidden select-none">
+      
+      <!-- Previous Button -->
+      <button 
+        onclick="prevImage()" 
+        class="absolute left-4 sm:left-8 z-10 p-3 rounded-full bg-slate-900/80 hover:bg-gold-500 hover:text-slate-950 text-slate-200 backdrop-blur-md border border-white/10 transition-all active:scale-95"
+      >
+        <i data-lucide="chevron-left" class="w-6 h-6"></i>
+      </button>
+
+      <!-- Active Image Container -->
+      <div class="max-w-6xl max-h-[75vh] flex items-center justify-center relative">
+        <img 
+          id="modal-active-img" 
+          src="" 
+          alt="Mansion Gallery Image"
+          class="max-w-full max-h-[75vh] object-contain rounded-lg shadow-2xl transition-opacity duration-200"
+        />
+      </div>
+
+      <!-- Next Button -->
+      <button 
+        onclick="nextImage()" 
+        class="absolute right-4 sm:right-8 z-10 p-3 rounded-full bg-slate-900/80 hover:bg-gold-500 hover:text-slate-950 text-slate-200 backdrop-blur-md border border-white/10 transition-all active:scale-95"
+      >
+        <i data-lucide="chevron-right" class="w-6 h-6"></i>
+      </button>
+
+    </div>
+
+    <!-- Thumbnail Strip Carousel -->
+    <div class="px-6 py-4 bg-slate-900/80 border-t border-slate-800/80 overflow-x-auto">
+      <div id="modal-thumbnails" class="flex gap-2.5 justify-center max-w-5xl mx-auto">
+        <!-- Dynamic Thumbnails -->
+      </div>
+    </div>
+
+  </div>
+
+  <!-- APPLICATION SCRIPTS -->
+  <script>
+    // State management
+    let state = {
+      villas: [],
+      activeVilla: null,
+      activeImageIndex: 0,
+      pollTimer: null,
+      isPolling: false
+    };
+
+    // Initialize Lucide Icons
+    document.addEventListener('DOMContentLoaded', () => {
+      lucide.createIcons();
+      fetchVillasData();
+      checkScrapeStatus();
+    });
+
+    // Keyboard navigation for gallery
+    document.addEventListener('keydown', (e) => {
+      const modal = document.getElementById('gallery-modal');
+      if (!modal.classList.contains('hidden')) {
+        if (e.key === 'ArrowRight') nextImage();
+        if (e.key === 'ArrowLeft') prevImage();
+        if (e.key === 'Escape') closeGallery();
+      }
+    });
+
+    // Toggle log viewer
+    function toggleConsoleLogs() {
+      const drawer = document.getElementById('terminal-drawer');
+      const btnText = document.getElementById('btn-toggle-logs-text');
+      if (drawer.classList.contains('hidden')) {
+        drawer.classList.remove('hidden');
+        btnText.textContent = 'Hide Logs';
+      } else {
+        drawer.classList.add('hidden');
+        btnText.textContent = 'View Logs';
+      }
+    }
+
+    // Trigger Scraping Process
+    async function triggerScrape(isForce = false) {
+      const forceRescrape = isForce || document.getElementById('force-rescrape-check').checked;
+      const btn = document.getElementById('btn-start-scrape');
+      btn.disabled = true;
+      btn.classList.add('opacity-50', 'cursor-not-allowed');
+
+      try {
+        const res = await fetch('/api/scrape/start', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ force_rescrape: forceRescrape })
+        });
+        const data = await res.json();
+        
+        // Show console logs automatically upon starting
+        document.getElementById('terminal-drawer').classList.remove('hidden');
+        document.getElementById('btn-toggle-logs-text').textContent = 'Hide Logs';
+
+        startPolling();
+      } catch (err) {
+        console.error('Failed to initiate scrape:', err);
+      } finally {
+        setTimeout(() => {
+          btn.disabled = false;
+          btn.classList.remove('opacity-50', 'cursor-not-allowed');
+        }, 1000);
+      }
+    }
+
+    // Start Polling Scraper Status
+    function startPolling() {
+      if (state.isPolling) return;
+      state.isPolling = true;
+      if (state.pollTimer) clearInterval(state.pollTimer);
+      state.pollTimer = setInterval(checkScrapeStatus, 1200);
+      checkScrapeStatus();
+    }
+
+    // Stop Polling
+    function stopPolling() {
+      state.isPolling = false;
+      if (state.pollTimer) {
+        clearInterval(state.pollTimer);
+        state.pollTimer = null;
+      }
+    }
+
+    // Check Scraper Status & Update UI
+    async function checkScrapeStatus() {
+      try {
+        const res = await fetch('/api/scrape/status');
+        const data = await res.json();
+        updateStatusUI(data);
+
+        if (data.is_running) {
+          if (!state.isPolling) startPolling();
+        } else {
+          if (state.isPolling) {
+            stopPolling();
+            fetchVillasData(); // Refresh grid after scrape completes
+          }
+        }
+      } catch (err) {
+        console.error('Error fetching scrape status:', err);
+      }
+    }
+
+    // Update Status Banner and Progress Bar
+    function updateStatusUI(data) {
+      const indicator = document.getElementById('status-indicator');
+      const badge = document.getElementById('status-badge');
+      const message = document.getElementById('status-message');
+      const timeSpan = document.getElementById('status-time');
+      const barFill = document.getElementById('progress-bar-fill');
+      const percentLabel = document.getElementById('progress-percent');
+      const detailLabel = document.getElementById('progress-detail');
+      const logsContainer = document.getElementById('terminal-logs');
+
+      // Update badge & indicator
+      if (data.status === 'running') {
+        indicator.className = 'w-3 h-3 rounded-full bg-amber-400 animate-pulse';
+        badge.className = 'text-xs uppercase font-bold tracking-wider px-2.5 py-0.5 rounded-md bg-amber-500/20 text-amber-300 border border-amber-500/30';
+        badge.textContent = 'SCRAPING LIVE';
+        timeSpan.textContent = `Elapsed: ${data.elapsed_seconds}s`;
+      } else if (data.status === 'completed') {
+        indicator.className = 'w-3 h-3 rounded-full bg-emerald-400';
+        badge.className = 'text-xs uppercase font-bold tracking-wider px-2.5 py-0.5 rounded-md bg-emerald-500/20 text-emerald-300 border border-emerald-500/30';
+        badge.textContent = 'COMPLETED';
+        timeSpan.textContent = `Finished in ${data.elapsed_seconds}s`;
+      } else if (data.status === 'error') {
+        indicator.className = 'w-3 h-3 rounded-full bg-rose-500';
+        badge.className = 'text-xs uppercase font-bold tracking-wider px-2.5 py-0.5 rounded-md bg-rose-500/20 text-rose-300 border border-rose-500/30';
+        badge.textContent = 'ERROR';
+        timeSpan.textContent = 'Check error details';
+      } else {
+        indicator.className = 'w-3 h-3 rounded-full bg-slate-500';
+        badge.className = 'text-xs uppercase font-bold tracking-wider px-2.5 py-0.5 rounded-md bg-slate-800 text-slate-300 border border-slate-700';
+        badge.textContent = 'IDLE';
+        timeSpan.textContent = 'Ready for automation';
+      }
+
+      message.textContent = data.message || 'Scraper is idle.';
+      
+      // Progress calculation
+      const pct = data.progress_percent || 0;
+      barFill.style.width = `${pct}%`;
+      percentLabel.textContent = `${pct}%`;
+      detailLabel.textContent = data.total_villas > 0 
+        ? `Processed ${data.processed_villas} of ${data.total_villas} mansions (${data.total_images_downloaded} photos saved)` 
+        : 'Standby';
+
+      // Update terminal logs
+      if (data.logs && data.logs.length > 0) {
+        logsContainer.innerHTML = data.logs.map(l => `<div class="leading-relaxed">${escapeHtml(l)}</div>`).join('');
+        logsContainer.scrollTop = logsContainer.scrollHeight;
+      }
+    }
+
+    // Fetch All Villas List from API
+    async function fetchVillasData() {
+      try {
+        const res = await fetch('/api/villas');
+        const data = await res.json();
+        state.villas = data.villas || [];
+        
+        document.getElementById('stat-total-villas').textContent = data.total_villas || 0;
+        document.getElementById('stat-total-photos').textContent = data.total_photos || 0;
+
+        renderVillasGrid(state.villas);
+      } catch (err) {
+        console.error('Error fetching villas:', err);
+      }
+    }
+
+    // Render Cards in Grid
+    function renderVillasGrid(villas) {
+      const grid = document.getElementById('villas-grid');
+      const empty = document.getElementById('empty-state');
+
+      if (!villas || villas.length === 0) {
+        grid.innerHTML = '';
+        empty.classList.remove('hidden');
+        return;
+      }
+
+      empty.classList.add('hidden');
+      grid.innerHTML = villas.map(villa => `
+        <div class="villa-card glass-card rounded-2xl overflow-hidden flex flex-col group" data-name="${escapeHtml(villa.display_name)}">
+          <div class="relative aspect-[4/3] bg-slate-900 overflow-hidden cursor-pointer" onclick="openGallery('${escapeHtml(villa.folder_name)}', 0)">
+            ${villa.hero_image 
+              ? `<img src="${villa.hero_image}" alt="${escapeHtml(villa.display_name)}" loading="lazy" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />`
+              : `<div class="w-full h-full flex items-center justify-center text-slate-600"><i data-lucide="image" class="w-12 h-12 stroke-1"></i></div>`
+            }
+            <div class="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-transparent opacity-80 group-hover:opacity-60 transition-opacity"></div>
+            <div class="absolute bottom-3 left-3 flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-950/80 backdrop-blur-md border border-white/10 text-xs font-semibold text-gold-400">
+              <i data-lucide="camera" class="w-3.5 h-3.5"></i>
+              <span>${villa.count} High-Res Photos</span>
+            </div>
+          </div>
+
+          <div class="p-5 flex-1 flex flex-col justify-between">
+            <div>
+              <h3 class="text-lg font-serif font-bold text-slate-100 group-hover:text-gold-400 transition-colors">
+                ${escapeHtml(villa.display_name)}
+              </h3>
+              <p class="text-xs text-slate-400 mt-1 font-mono">
+                ./downloads/${escapeHtml(villa.folder_name)}/
+              </p>
+            </div>
+
+            <div class="pt-4 mt-4 border-t border-slate-800/80 flex items-center justify-between">
+              <button 
+                onclick="openGallery('${escapeHtml(villa.folder_name)}', 0)"
+                class="w-full flex items-center justify-center gap-2 py-2 px-4 rounded-xl bg-slate-800/90 hover:bg-gold-500 hover:text-slate-950 text-slate-200 text-xs font-semibold transition-all duration-200"
+              >
+                <i data-lucide="images" class="w-4 h-4"></i>
+                <span>View Full Gallery</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      `).join('');
+
+      lucide.createIcons();
+    }
+
+    // Filter Villas by Search Query
+    function filterVillas() {
+      const q = document.getElementById('search-input').value.toLowerCase().trim();
+      const cards = document.querySelectorAll('.villa-card');
+      cards.forEach(c => {
+        const name = (c.getAttribute('data-name') || '').toLowerCase();
+        if (name.includes(q)) {
+          c.classList.remove('hidden');
+        } else {
+          c.classList.add('hidden');
+        }
+      });
+    }
+
+    // OPEN GALLERY LIGHTBOX
+    function openGallery(folderName, startIndex = 0) {
+      const villa = state.villas.find(v => v.folder_name === folderName);
+      if (!villa || !villa.images || villa.images.length === 0) return;
+
+      state.activeVilla = villa;
+      state.activeImageIndex = startIndex;
+
+      document.getElementById('modal-villa-title').textContent = villa.display_name;
+      
+      const modal = document.getElementById('gallery-modal');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+
+      updateLightboxView();
+      renderThumbnails();
+      lucide.createIcons();
+    }
+
+    // CLOSE GALLERY LIGHTBOX
+    function closeGallery() {
+      const modal = document.getElementById('gallery-modal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+      state.activeVilla = null;
+    }
+
+    // NAVIGATION
+    function nextImage() {
+      if (!state.activeVilla) return;
+      state.activeImageIndex = (state.activeImageIndex + 1) % state.activeVilla.images.length;
+      updateLightboxView();
+    }
+
+    function prevImage() {
+      if (!state.activeVilla) return;
+      state.activeImageIndex = (state.activeImageIndex - 1 + state.activeVilla.images.length) % state.activeVilla.images.length;
+      updateLightboxView();
+    }
+
+    function selectImage(index) {
+      if (!state.activeVilla) return;
+      state.activeImageIndex = index;
+      updateLightboxView();
+    }
+
+    // UPDATE LIGHTBOX DISPLAY
+    function updateLightboxView() {
+      if (!state.activeVilla) return;
+      const total = state.activeVilla.images.length;
+      const currentUrl = state.activeVilla.images[state.activeImageIndex];
+
+      document.getElementById('modal-photo-counter').textContent = `Photo ${state.activeImageIndex + 1} of ${total}`;
+      
+      const activeImg = document.getElementById('modal-active-img');
+      activeImg.src = currentUrl;
+
+      const rawLink = document.getElementById('modal-raw-link');
+      rawLink.href = currentUrl;
+
+      // Update active thumbnail border
+      document.querySelectorAll('.thumb-btn').forEach((btn, idx) => {
+        if (idx === state.activeImageIndex) {
+          btn.className = 'thumb-btn relative w-14 h-14 rounded-lg overflow-hidden border-2 border-gold-400 shrink-0 scale-105 transition-all';
+        } else {
+          btn.className = 'thumb-btn relative w-14 h-14 rounded-lg overflow-hidden border border-slate-700 hover:border-slate-400 opacity-60 hover:opacity-100 shrink-0 transition-all';
+        }
+      });
+    }
+
+    // RENDER THUMBNAIL STRIP
+    function renderThumbnails() {
+      if (!state.activeVilla) return;
+      const container = document.getElementById('modal-thumbnails');
+      container.innerHTML = state.activeVilla.images.map((url, idx) => `
+        <button 
+          onclick="selectImage(${idx})"
+          class="thumb-btn relative w-14 h-14 rounded-lg overflow-hidden border ${idx === state.activeImageIndex ? 'border-2 border-gold-400 scale-105' : 'border-slate-700 opacity-60 hover:opacity-100'} shrink-0 transition-all"
+        >
+          <img src="${url}" class="w-full h-full object-cover" loading="lazy" />
+        </button>
+      `).join('');
+    }
+
+    // Helper: Escape HTML
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str).replace(/[&<>"']/g, function(m) {
+        return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[m];
+      });
+    }
+  </script>
+</body>
+</html>
