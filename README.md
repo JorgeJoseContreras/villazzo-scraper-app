@@ -1,5 +1,7 @@
 # Villazzo Miami Mansion Scraper & Interactive Web Dashboard
 
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/JorgeJoseContreras/villazzo-scraper-app)
+
 A complete, production-ready full-stack Python application (FastAPI backend + responsive web dashboard) designed for GitHub hosting and seamless zero-configuration deployment to Render as a Web Service.
 
 The application automatically crawls high-resolution architectural photographs from [Villazzo's Miami Luxury Villa Portfolio](https://www.villazzo.com/rental-villas/miami/) (e.g. *Villa Naomi*, *Villa Denise*, *Villa Celeste*, *Villa Siri*, *Villa Contenta*, etc.) and serves them through an interactive web gallery with a fullscreen lightbox viewer.
